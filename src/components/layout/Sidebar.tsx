@@ -3,17 +3,21 @@ import {
   Activity,
   BookOpen,
   Gauge,
+  GitBranch,
   Moon,
   Network,
   Shield,
   Sun,
   Radio,
+  Cable,
 } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
 
 const nav = [
   { id: "dashboard", label: "Dashboard", icon: Gauge },
   { id: "pipeline", label: "Intent Pipeline", icon: Network },
+  { id: "topology", label: "Topology Map", icon: GitBranch },
+  { id: "vendors", label: "Vendor Adapters", icon: Cable },
   { id: "safety", label: "Safety Linter", icon: Shield },
   { id: "knowledge", label: "Knowledge Base", icon: BookOpen },
   { id: "activity", label: "Activity Log", icon: Activity },

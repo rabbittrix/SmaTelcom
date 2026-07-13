@@ -1,0 +1,30 @@
+# Huawei VRP ↔ Generic Intent Mapping (RAG seed)
+
+## Intent: Interface Down
+Generic: "Interface Down" / "shut interface"
+Huawei VRP:
+```
+system-view
+interface GigabitEthernet0/0/1
+shutdown
+quit
+quit
+save
+```
+
+## Intent: Interface Up
+Huawei VRP:
+```
+system-view
+interface GigabitEthernet0/0/1
+undo shutdown
+quit
+quit
+save
+```
+
+## Intent: Congestion / QoS
+Use traffic behavior CAR + traffic policy outbound on GigabitEthernet.
+
+## Safety
+Do not reset bgp all on core without HITL. Prefer edge interfaces.

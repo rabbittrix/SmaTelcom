@@ -1,0 +1,28 @@
+# Cisco IOS ↔ Generic Intent Mapping (RAG seed)
+
+## Intent: Interface Down
+Generic: "Interface Down" / "shut interface"
+Cisco IOS:
+```
+configure terminal
+interface GigabitEthernet0/0/1
+shutdown
+end
+write memory
+```
+
+## Intent: Interface Up
+Cisco IOS:
+```
+configure terminal
+interface GigabitEthernet0/0/1
+no shutdown
+end
+write memory
+```
+
+## Intent: Congestion / QoS shaping
+Cisco IOS policy-map shape average on class-default, attach service-policy output.
+
+## Safety
+Never shutdown core_router. Prefer interface-level actions on PE edge only.

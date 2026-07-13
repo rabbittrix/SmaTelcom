@@ -25,6 +25,26 @@ pub struct TelemetryEvent {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TopologyNode {
+    pub id: String,
+    pub label: String,
+    pub site: String,
+    pub role: String,
+    pub x: f64,
+    pub y: f64,
+    pub status: String,
+    pub cpu_pct: f64,
+    pub vendor: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TopologyLink {
+    pub source: String,
+    pub target: String,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HealthSnapshot {
     pub overall_score: u8,
     pub latency_ms: f64,
@@ -35,15 +55,21 @@ pub struct HealthSnapshot {
     pub sites_total: u32,
     pub last_event: Option<TelemetryEvent>,
     pub recent_events: Vec<TelemetryEvent>,
+    pub nodes: Vec<TopologyNode>,
+    pub links: Vec<TopologyLink>,
 }
 
 pub struct TelemetryEngine {
     events: RwLock<VecDeque<TelemetryEvent>>,
     health: RwLock<HealthSnapshot>,
+    nodes: RwLock<Vec<TopologyNode>>,
+    links: RwLock<Vec<TopologyLink>>,
 }
 
 impl TelemetryEngine {
     pub fn new() -> Self {
+        let nodes = seed_nodes();
+        let links = seed_links();
         Self {
             events: RwLock::new(VecDeque::with_capacity(MAX_EVENTS)),
             health: RwLock::new(HealthSnapshot {
@@ -56,7 +82,11 @@ impl TelemetryEngine {
                 sites_total: 48,
                 last_event: None,
                 recent_events: vec![],
+                nodes: nodes.clone(),
+                links: links.clone(),
             }),
+            nodes: RwLock::new(nodes),
+            links: RwLock::new(links),
         }
     }
 
@@ -73,6 +103,8 @@ impl TelemetryEngine {
         let mut snap = self.health.read().clone();
         snap.recent_events = self.events.read().iter().rev().take(40).cloned().collect();
         snap.last_event = snap.recent_events.first().cloned();
+        snap.nodes = self.nodes.read().clone();
+        snap.links = self.links.read().clone();
         snap
     }
 
@@ -150,6 +182,93 @@ impl TelemetryEngine {
             - h.packet_loss_pct * 12.0
             - h.active_alarms as f64 * 4.0)
             .clamp(40.0, 99.0) as u8;
-        h.last_event = Some(event);
+        h.last_event = Some(event.clone());
+
+        // Drive topology node states from latest telemetry element
+        {
+            let mut nodes = self.nodes.write();
+            for n in nodes.iter_mut() {
+                if n.label == element || n.id.contains(&element) {
+                    n.status = severity.to_string();
+                    if metric == "cpu" {
+                        n.cpu_pct = rounded;
+                    } else {
+                        n.cpu_pct = (n.cpu_pct * 0.8 + rng.gen_range(15.0..70.0) * 0.2)
+                            .clamp(5.0, 99.0);
+                    }
+                } else if rng.gen_bool(0.15) {
+                    n.cpu_pct = rng.gen_range(12.0..55.0);
+                    n.status = if n.cpu_pct > 80.0 {
+                        "warning".into()
+                    } else {
+                        "ok".into()
+                    };
+                }
+            }
+            let mut links = self.links.write();
+            for l in links.iter_mut() {
+                if l.source.contains(&element) || l.target.contains(&element) {
+                    l.status = if severity == "critical" {
+                        "degraded".into()
+                    } else {
+                        "up".into()
+                    };
+                }
+            }
+        }
+    }
+}
+
+fn seed_nodes() -> Vec<TopologyNode> {
+    vec![
+        node("pe-router-01", "pe-router-01", "DC-East", "PE", 120.0, 180.0, "cisco"),
+        node("amf-01", "amf-01", "DC-East", "AMF", 280.0, 120.0, "cisco"),
+        node("upf-03", "upf-03", "DC-West", "UPF", 480.0, 140.0, "huawei"),
+        node("agg-sw-02", "agg-sw-02", "RAN-North", "AGG", 200.0, 320.0, "huawei"),
+        node("gnodeb-441", "gnodeb-441", "RAN-North", "RAN", 120.0, 420.0, "huawei"),
+        node("firewall-edge", "firewall-edge", "Edge-POP-1", "FW", 400.0, 300.0, "cisco"),
+        node("optics-mux-7", "optics-mux-7", "Core-Peering", "OPT", 560.0, 260.0, "generic"),
+    ]
+}
+
+fn node(
+    id: &str,
+    label: &str,
+    site: &str,
+    role: &str,
+    x: f64,
+    y: f64,
+    vendor: &str,
+) -> TopologyNode {
+    TopologyNode {
+        id: id.into(),
+        label: label.into(),
+        site: site.into(),
+        role: role.into(),
+        x,
+        y,
+        status: "ok".into(),
+        cpu_pct: 28.0,
+        vendor: vendor.into(),
+    }
+}
+
+fn seed_links() -> Vec<TopologyLink> {
+    vec![
+        link("pe-router-01", "amf-01"),
+        link("pe-router-01", "agg-sw-02"),
+        link("amf-01", "upf-03"),
+        link("agg-sw-02", "gnodeb-441"),
+        link("upf-03", "firewall-edge"),
+        link("firewall-edge", "optics-mux-7"),
+        link("pe-router-01", "optics-mux-7"),
+    ]
+}
+
+fn link(source: &str, target: &str) -> TopologyLink {
+    TopologyLink {
+        source: source.into(),
+        target: target.into(),
+        status: "up".into(),
     }
 }

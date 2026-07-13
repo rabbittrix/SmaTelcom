@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Check, ShieldAlert, X } from "lucide-react";
-import type { PipelineResult } from "../../lib/types";
+import type { PipelineResult, PredictedImpact } from "../../lib/types";
 
 export function CriticalAlert({
   result,
@@ -20,7 +20,7 @@ export function CriticalAlert({
       <motion.div
         initial={{ scale: 0.94, y: 12 }}
         animate={{ scale: 1, y: 0 }}
-        className="w-full max-w-xl overflow-hidden rounded-2xl border shadow-2xl"
+        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border shadow-2xl"
         style={{ background: "var(--bg-elevated)", borderColor: "rgba(239,68,68,0.45)" }}
       >
         <div
@@ -31,7 +31,7 @@ export function CriticalAlert({
           <div>
             <h3 className="text-lg font-semibold">Human-in-the-Loop Required</h3>
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Graduated autonomy · action flagged before execution
+              Digital Twin Lite · review Predicted Impact before Approve
             </p>
           </div>
         </div>
@@ -42,6 +42,31 @@ export function CriticalAlert({
           </Field>
           <Field label="Decision Logic">{result.decision_logic}</Field>
           <Field label="Judge Summary">{result.judge_summary}</Field>
+
+          <PredictedImpactPanel impact={result.predicted_impact} />
+
+          {result.vendor_commands?.length > 0 && (
+            <div>
+              <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+                Vendor CLI Translations
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {result.vendor_commands.map((v) => (
+                  <pre
+                    key={v.vendor}
+                    className="overflow-auto rounded-lg border p-2 font-mono text-[10px]"
+                    style={{ borderColor: "var(--border)" }}
+                  >
+                    <div className="mb-1 font-sans text-[10px] uppercase" style={{ color: "var(--accent)" }}>
+                      {v.vendor} · conf {(v.confidence * 100).toFixed(0)}%
+                    </div>
+                    {v.cli}
+                  </pre>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3">
             <Field label="Risk Assessment">
               <span
@@ -80,6 +105,41 @@ export function CriticalAlert({
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+function PredictedImpactPanel({ impact }: { impact: PredictedImpact }) {
+  const rows = [
+    ["CPU %", impact.cpu_pct_before, impact.cpu_pct_after],
+    ["Latency ms", impact.latency_ms_before, impact.latency_ms_after],
+    ["Throughput Gbps", impact.throughput_gbps_before, impact.throughput_gbps_after],
+    ["Loss %", impact.packet_loss_pct_before, impact.packet_loss_pct_after],
+  ] as const;
+
+  return (
+    <div
+      className="rounded-xl border p-3"
+      style={{ borderColor: "rgba(45,212,191,0.35)", background: "rgba(13,148,136,0.06)" }}
+    >
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--accent)" }}>
+        Predicted Impact (Digital Twin Lite)
+      </div>
+      <p className="mb-3 text-xs" style={{ color: "var(--text-muted)" }}>
+        {impact.summary} · Blast radius: {impact.blast_radius}
+      </p>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {rows.map(([label, before, after]) => (
+          <div key={label} className="rounded-lg border p-2" style={{ borderColor: "var(--border)" }}>
+            <div className="text-[10px] uppercase" style={{ color: "var(--text-muted)" }}>
+              {label}
+            </div>
+            <div className="font-mono text-xs">
+              {Number(before).toFixed(1)} → <span style={{ color: "var(--accent)" }}>{Number(after).toFixed(1)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

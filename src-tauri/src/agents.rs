@@ -1,13 +1,16 @@
 //! Multi-agent decision pipeline:
 //! Performance, Security, Topology agents → Judge Agent synthesis.
-//! Safety linter runs before HITL exposure.
+//! Safety linter runs before HITL exposure. Digital Twin predicts impact.
 
+use crate::digital_twin::{self, PredictedImpact};
 use crate::error::SmaResult;
 use crate::guardrails::{self, LintResult, RiskLevel};
+use crate::network_connector::{CommandTranslator, TranslatedCommand};
 use crate::ollama::OllamaClient;
 use crate::rag::KnowledgeBase;
 use crate::telemetry::HealthSnapshot;
 use serde::{Deserialize, Serialize};
+use std::time::Instant;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -30,6 +33,9 @@ pub struct PipelineResult {
     pub lint: LintResult,
     pub status: String,
     pub knowledge_used: bool,
+    pub predicted_impact: PredictedImpact,
+    pub vendor_commands: Vec<TranslatedCommand>,
+    pub duration_ms: u64,
 }
 
 pub async fn run_pipeline(
@@ -39,6 +45,7 @@ pub async fn run_pipeline(
     health: &HealthSnapshot,
     model_pref: Option<&str>,
 ) -> SmaResult<PipelineResult> {
+    let started = Instant::now();
     let intent = intent.trim();
     if intent.is_empty() {
         return Err(crate::error::SmaError::InvalidIntent(
@@ -49,6 +56,7 @@ pub async fn run_pipeline(
     let model = ollama.resolve_model(model_pref).await?;
     let rag_ctx = kb.context_for(intent, 3);
     let knowledge_used = !rag_ctx.contains("No relevant knowledge-base");
+    let vendor_commands = CommandTranslator::translate_all(intent, kb);
 
     let health_ctx = format!(
         "Network health score={}, latency={}ms, loss={}%, throughput={}Gbps, alarms={}, sites={}/{}",
@@ -110,16 +118,13 @@ pub async fn run_pipeline(
 
     let (judge_summary, proposed_command, decision_logic, risk_hint) = parse_judge(&judge_raw);
 
-    // SAFETY LINTER — deterministic, before HITL
-    let lint = guardrails::lint_command(&proposed_command);
+    let mut lint = guardrails::lint_command(&proposed_command);
     let risk = if lint.risk > risk_from_str(&risk_hint) {
         lint.risk.clone()
     } else {
         risk_from_str(&risk_hint)
     };
 
-    // Re-lint with combined risk awareness for HITL flags
-    let mut lint = lint;
     if matches!(risk, RiskLevel::High | RiskLevel::Critical) {
         lint.requires_hitl = true;
         lint.auto_approvable = false;
@@ -133,6 +138,9 @@ pub async fn run_pipeline(
         "pending_hitl".into()
     };
 
+    let predicted_impact =
+        digital_twin::predict_impact(ollama, &model, &proposed_command, health).await?;
+
     Ok(PipelineResult {
         id: Uuid::new_v4().to_string(),
         intent: intent.to_string(),
@@ -144,6 +152,9 @@ pub async fn run_pipeline(
         lint,
         status,
         knowledge_used,
+        predicted_impact,
+        vendor_commands,
+        duration_ms: started.elapsed().as_millis() as u64,
     })
 }
 

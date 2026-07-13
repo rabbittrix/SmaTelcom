@@ -1,5 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { HealthSnapshot, LintResult, PipelineResult } from "./types";
+import type {
+  AuditRecord,
+  ExecResult,
+  HealthSnapshot,
+  LintResult,
+  PipelineResult,
+  RoiSnapshot,
+  TranslatedCommand,
+} from "./types";
 
 export async function checkOllama(): Promise<boolean> {
   return invoke<boolean>("check_ollama");
@@ -36,4 +44,20 @@ export async function lintCommand(command: string): Promise<LintResult> {
 
 export async function reloadKnowledgeBase(): Promise<number> {
   return invoke<number>("reload_knowledge_base");
+}
+
+export async function getRoi(): Promise<RoiSnapshot> {
+  return invoke<RoiSnapshot>("get_roi_snapshot");
+}
+
+export async function getAuditTrail(limit = 50): Promise<AuditRecord[]> {
+  return invoke<AuditRecord[]>("get_audit_trail", { limit });
+}
+
+export async function translateIntent(intent: string): Promise<TranslatedCommand[]> {
+  return invoke<TranslatedCommand[]>("translate_intent", { intent });
+}
+
+export async function simulateVendorExec(intent: string): Promise<ExecResult[]> {
+  return invoke<ExecResult[]>("simulate_vendor_exec", { intent });
 }
