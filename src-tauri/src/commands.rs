@@ -42,7 +42,8 @@ pub async fn analyze_network_intent(
     request: AnalyzeRequest,
 ) -> Result<PipelineResult, String> {
     let health = state.telemetry.snapshot();
-    let kb = state.rag.lock().await;
+    // Clone KB then drop the lock — do not hold it across long Ollama awaits
+    let kb = state.rag.lock().await.clone();
     let result = agents::run_pipeline(
         &state.ollama,
         &kb,
@@ -126,7 +127,7 @@ pub async fn search_knowledge(
     query: String,
     top_k: Option<usize>,
 ) -> Result<Vec<DocumentChunk>, String> {
-    let kb = state.rag.lock().await;
+    let kb = state.rag.lock().await.clone();
     Ok(kb.search(&query, top_k.unwrap_or(5)))
 }
 
@@ -157,7 +158,11 @@ pub async fn translate_intent(
     state: tauri::State<'_, AppState>,
     intent: String,
 ) -> Result<Vec<TranslatedCommand>, String> {
-    let kb = state.rag.lock().await;
+    let intent = intent.trim().to_string();
+    if intent.is_empty() {
+        return Err("Intent cannot be empty".into());
+    }
+    let kb = state.rag.lock().await.clone();
     Ok(crate::network_connector::CommandTranslator::translate_all(
         &intent, &kb,
     ))
@@ -168,7 +173,11 @@ pub async fn simulate_vendor_exec(
     state: tauri::State<'_, AppState>,
     intent: String,
 ) -> Result<Vec<ExecResult>, String> {
-    let kb = state.rag.lock().await;
+    let intent = intent.trim().to_string();
+    if intent.is_empty() {
+        return Err("Intent cannot be empty".into());
+    }
+    let kb = state.rag.lock().await.clone();
     let pairs = NetworkConnector::translate_and_preview(&intent, &kb);
     Ok(pairs.into_iter().map(|(_, e)| e).collect())
 }

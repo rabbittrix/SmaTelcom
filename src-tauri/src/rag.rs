@@ -11,7 +11,7 @@ pub struct DocumentChunk {
     pub content: String,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct KnowledgeBase {
     pub root: PathBuf,
     pub chunks: Vec<DocumentChunk>,

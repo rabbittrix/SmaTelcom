@@ -54,6 +54,8 @@ function AppInner() {
   const [roi, setRoi] = useState<RoiSnapshot | null>(null);
   const [vendorMaps, setVendorMaps] = useState<TranslatedCommand[]>([]);
   const [vendorExec, setVendorExec] = useState<ExecResult[]>([]);
+  const [vendorBusy, setVendorBusy] = useState(false);
+  const [vendorError, setVendorError] = useState<string | null>(null);
   const [audit, setAudit] = useState<AuditRecord[]>([]);
 
   const pushLog = useCallback((level: ActivityEntry["level"], message: string) => {
@@ -155,16 +157,33 @@ function AppInner() {
   };
 
   const runVendorPreview = async () => {
+    const text = intent.trim();
+    if (!text) {
+      setVendorError("Enter a network intent first.");
+      setNav("vendors");
+      return;
+    }
+    setVendorBusy(true);
+    setVendorError(null);
+    setNav("vendors");
     try {
-      const [maps, execs] = await Promise.all([
-        translateIntent(intent),
-        simulateVendorExec(intent),
-      ]);
+      const maps = await translateIntent(text);
       setVendorMaps(maps);
-      setVendorExec(execs);
+      try {
+        const execs = await simulateVendorExec(text);
+        setVendorExec(execs);
+      } catch (execErr) {
+        setVendorExec([]);
+        pushLog("error", `SSH sim: ${String(execErr)}`);
+      }
       pushLog("info", `Translated intent to ${maps.length} vendor CLI dialects (SSH sim)`);
     } catch (e) {
+      setVendorMaps([]);
+      setVendorExec([]);
+      setVendorError(String(e));
       pushLog("error", String(e));
+    } finally {
+      setVendorBusy(false);
     }
   };
 
@@ -331,15 +350,34 @@ function AppInner() {
                   >
                     <h2 className="mb-2 text-lg font-semibold">Command Translator + SSH Simulation</h2>
                     <p className="mb-3 text-sm" style={{ color: "var(--text-muted)" }}>
-                      Maps generic intents to Cisco IOS / Huawei VRP via local RAG, then runs simulated SSH sessions (`ssh2` real path available when simulate=false).
+                      Maps generic intents to Cisco IOS / Huawei VRP via local RAG, then runs simulated SSH sessions.
                     </p>
+                    <label
+                      className="mb-2 block text-xs font-semibold uppercase tracking-wider"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      Intent to translate
+                    </label>
+                    <textarea
+                      value={intent}
+                      onChange={(e) => setIntent(e.target.value)}
+                      rows={3}
+                      className="mb-3 w-full resize-none rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
+                      style={{ borderColor: "var(--border)" }}
+                      placeholder='e.g. Interface Down on edge PE'
+                    />
                     <button
                       onClick={runVendorPreview}
-                      className="rounded-lg px-4 py-2 text-sm font-medium text-white"
+                      disabled={vendorBusy || !intent.trim()}
+                      className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                       style={{ background: "#0d9488" }}
                     >
-                      Translate Current Intent
+                      {vendorBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {vendorBusy ? "Translating…" : "Translate Current Intent"}
                     </button>
+                    {vendorError && (
+                      <p className="mt-3 text-sm text-red-500">{vendorError}</p>
+                    )}
                   </div>
                   <div className="grid gap-4 lg:grid-cols-2">
                     {vendorMaps.map((v) => (
@@ -355,6 +393,11 @@ function AppInner() {
                       </pre>
                     ))}
                   </div>
+                  {!vendorBusy && vendorMaps.length === 0 && !vendorError && (
+                    <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                      No translations yet. Click Translate Current Intent.
+                    </p>
+                  )}
                   {vendorExec.map((e) => (
                     <pre
                       key={e.target_id}
