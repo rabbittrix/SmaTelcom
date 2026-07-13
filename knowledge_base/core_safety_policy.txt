@@ -1,0 +1,27 @@
+# SmaTelcom — Core Network Safety Policy
+
+## Blacklist Principles
+Any AI-generated operational command MUST pass the Rust Safety Linter before
+Human-in-the-Loop (HITL) notification.
+
+### Critical (Hard Block)
+- shutdown / power-off / halt of core_router, core_switch, BNG, MME, AMF
+- delete / erase / wipe of config / running-config / startup-config
+- format / mkfs / destructive disk operations
+- disable firewall / ACL / IPS / IDS
+- factory-reset / write erase
+
+### High (HITL Mandatory)
+- clear entire BGP/OSPF/ISIS/MPLS state
+- reload chassis / supervisor / control-plane
+- permit any any / 0.0.0.0/0 ACL openings
+
+### Medium
+- QoS, traffic-shape, rate-limit, bandwidth changes
+
+### Low (Auto-approvable)
+- optimize / tune / adjust threshold, timer, metric, weight
+
+## Local-First Mandate
+All inference targets localhost Ollama (127.0.0.1:11434).
+No telemetry or intents leave the operator workstation.

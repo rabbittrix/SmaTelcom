@@ -1,0 +1,99 @@
+SmaTelcom Private License
+Apache-Style · Authorization Required
+=====================================
+
+Copyright (c) 2026 Roberto de Souza <rabbittrix@hotmail.com>
+All rights reserved.
+
+This software and associated documentation files (the "Software") are the
+private intellectual property of the Author. The Software is NOT open source,
+is NOT released under the OSI Apache License 2.0 as a public grant, and may
+not be used, copied, modified, merged, published, distributed, sublicensed,
+or sold without prior written Authorization from the Author.
+
+1. License Model
+
+----------------
+This license adopts Apache-style structure for clarity of copyright, patent,
+redistribution, and limitation of liability terms, but those grants apply
+ONLY after the Author issues an explicit Authorization to a named Licensee.
+
+Until Authorization is granted (and any required fee is settled), no rights
+are conferred other than viewing this repository for evaluation under the
+Author's private control.
+
+2. Authorization Required
+
+-------------------------
+Any commercial, internal, research, deployment, redistribution, or derivative
+use of SmaTelcom requires Authorization of the Author.
+
+Request Authorization by email: <rabbittrix@hotmail.com>
+Subject line: "SmaTelcom License Authorization Request"
+
+Authorization may be conditioned on payment. Transfer instructions and the
+scannable SEPA QR code are published in:
+
+  LICENSES/LICENSE_RULES.md
+  LICENSES/payment_transfer_qr.png
+
+3. Grant Upon Authorization (Apache-Style)
+
+------------------------------------------
+Subject to the terms below and solely to the extent of a valid Authorization
+issued by the Author, the Author grants the Licensee a limited, non-exclusive,
+non-transferable, revocable license to use the Software as specified in that
+Authorization (scope, seats, environment, territory, and term).
+
+Patent and copyright permissions, if any, are limited to the Authorization
+instrument and do not create a general public license.
+
+4. Redistribution
+
+-----------------
+Redistribution of source or binary forms is forbidden unless the Authorization
+expressly permits it. Any permitted redistribution must retain this LICENSE
+file, copyright notices, and LICENSE_RULES.md references.
+
+5. Contributions
+
+----------------
+Unless otherwise agreed in writing, contributions submitted to the Author are
+assigned to / licensed exclusively to the Author under the same private terms.
+
+6. Trademarks
+
+-------------
+This license does not grant permission to use the trade names, trademarks,
+service marks, or product names of the Author, except as required for
+reasonable description of the origin of the Software.
+
+7. Disclaimer of Warranty
+
+-------------------------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+8. Limitation of Liability
+
+--------------------------
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING
+FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE — EXCEPT TO THE EXTENT PROHIBITED BY APPLICABLE LAW.
+
+9. Termination
+
+--------------
+Unauthorized use terminates any implied permission immediately. The Author
+may revoke Authorization for material breach, non-payment, or misuse.
+
+10. Governing Contact
+
+---------------------
+Author: Roberto de Souza
+Email:  <rabbittrix@hotmail.com>
+Project: SmaTelcom
+
+See also: LICENSES/LICENSE_RULES.md

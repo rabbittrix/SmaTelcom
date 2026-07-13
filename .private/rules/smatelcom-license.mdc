@@ -1,0 +1,28 @@
+---
+description: SmaTelcom private license — Apache-style, Author Authorization required
+alwaysApply: true
+---
+
+# SmaTelcom License Rules (Agent)
+
+SmaTelcom is **private** software by **Roberto de Souza** (`rabbittrix@hotmail.com`).
+
+## Mandatory
+
+- Do **not** describe, tag, or publish this project as MIT or as public Apache-2.0 open source.
+- SPDX / package metadata must remain `UNLICENSED` or `SEE LICENSE IN LICENSE` / proprietary Authorization model.
+- Preserve `LICENSE` and `LICENSES/LICENSE_RULES.md` (including payment QR assets).
+- Any redistribution, commercial packaging, or “open sourcing” suggestion requires directing the user to **Author Authorization**.
+
+## Authorization & payment
+
+- Use / deploy / redistribute requires Authorization from the Author.
+- Payment transfer details and SEPA QR live in `LICENSES/LICENSE_RULES.md` and `LICENSES/payment_transfer_qr.png`.
+- IBAN: `PT50 3560 0001 9001 8573 6595 0` · BIC/SWIFT: `REVOPTP2` · Beneficiary: Roberto de Souza.
+- Contact: `rabbittrix@hotmail.com`.
+
+## Do not
+
+- Auto-add MIT license headers to new files.
+- Strip copyright or license rules from generated docs.
+- Commit secrets; payment details above are intentional public licensing instructions only.

@@ -1,0 +1,25 @@
+# SmaTelcom — RAN Congestion Playbook (Seed Manual)
+
+## Intent
+Reduce congestion on radio access nodes while preserving enterprise slice SLAs.
+
+## Safe Actions
+1. Identify congested cells via PRB utilization > 80% for 15 minutes.
+2. Apply mild downlink shaping on best-effort QCI/5QI only.
+3. Rebalance load to neighbor cells with spare capacity.
+4. Tune handover thresholds (+1 to +3 dB) for edge users.
+
+## Forbidden Actions
+- Do not shutdown core_router or AMF/UPF control elements.
+- Do not delete running-config or startup-config.
+- Do not disable firewall or security policies.
+- Do not factory-reset any PE or aggregation switch.
+
+## Graduated Autonomy
+- Low risk: threshold optimization, metric collection → auto-approve.
+- Medium risk: QoS / traffic shaping → HITL recommended.
+- High/Critical: control-plane reload, ACL any-any, core shutdown → HITL mandatory or hard block.
+
+## Example Intent Phrases
+- "Reduce congestion on RAN-North while preserving SLA for enterprise slice"
+- "Optimize threshold for cell edge throughput on gNodeB-441"

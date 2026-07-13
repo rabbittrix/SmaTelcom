@@ -1,0 +1,14 @@
+# SmaTelcom — Topology Reference (MVP)
+
+## Domains
+- DC-East / DC-West: dual core data centers with PE routers
+- RAN-North / RAN-South: radio access aggregation
+- Edge-POP-1 / Edge-POP-2: low-latency breakout
+- Core-Peering: upstream interconnect
+
+## Typical Elements
+- pe-router-01, agg-sw-02, gnodeb-441, upf-03, amf-01, firewall-edge, optics-mux-7
+
+## Failure Domains
+Prefer actions scoped to a single site or element.
+Never propose simultaneous changes across both DC-East and DC-West control planes.
