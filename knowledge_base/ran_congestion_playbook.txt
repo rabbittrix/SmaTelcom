@@ -1,4 +1,4 @@
-# SmaTelcom — RAN Congestion Playbook (Seed Manual)
+# SmarTelcom — RAN Congestion Playbook (Seed Manual)
 
 ## Intent
 Reduce congestion on radio access nodes while preserving enterprise slice SLAs.

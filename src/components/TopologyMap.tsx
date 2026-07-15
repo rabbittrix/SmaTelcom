@@ -99,9 +99,9 @@ export function TopologyMap({ health }: { health: HealthSnapshot | null }) {
         style={{ borderColor: "var(--border)" }}
       >
         <div>
-          <h3 className="text-sm font-semibold">Network Topology</h3>
+          <h3 className="text-sm font-semibold">Network Map</h3>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            Live node state · scroll to zoom · drag to pan
+            Core · Downtown · DataCenter health from telemetry-tick · scroll to zoom · drag to pan
           </p>
         </div>
 
@@ -267,7 +267,7 @@ function TopoNode({ node, zoom }: { node: TopologyNode; zoom: number }) {
         fill="var(--text-muted)"
         fontFamily="IBM Plex Sans, sans-serif"
       >
-        {node.role} · {node.cpu_pct.toFixed(0)}%
+        {node.role} · {node.site} · {node.cpu_pct.toFixed(0)}%
       </text>
     </motion.g>
   );

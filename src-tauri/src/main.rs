@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    smatelcom_lib::run();
+    smartelcom_lib::run();
 }

@@ -1,4 +1,4 @@
-# SmaTelcom — Topology Reference (MVP)
+# SmarTelcom — Topology Reference (MVP)
 
 ## Domains
 - DC-East / DC-West: dual core data centers with PE routers

@@ -3792,7 +3792,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "smatelcom"
+name = "smartelcom"
 version = "0.1.0"
 dependencies = [
  "anyhow",

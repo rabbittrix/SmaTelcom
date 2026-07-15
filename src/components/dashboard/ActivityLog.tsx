@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { Bot, Shield, User } from "lucide-react";
 import type { ActivityEntry } from "../../lib/types";
 
 const levelColor: Record<ActivityEntry["level"], string> = {
@@ -11,6 +12,37 @@ const levelColor: Record<ActivityEntry["level"], string> = {
   error: "#ef4444",
 };
 
+function LevelBadge({ level }: { level: ActivityEntry["level"] }) {
+  if (level === "agent" || level === "judge") {
+    return (
+      <span className="inline-flex items-center gap-1" style={{ color: levelColor[level] }}>
+        <span aria-hidden>🤖</span>
+        <Bot className="h-3 w-3" />
+        <span>[{level === "judge" ? "JUDGE" : "AI"}]</span>
+      </span>
+    );
+  }
+  if (level === "safety") {
+    return (
+      <span className="inline-flex items-center gap-1" style={{ color: levelColor.safety }}>
+        <span aria-hidden>🛡️</span>
+        <Shield className="h-3 w-3" />
+        <span>[GUARDRAILS]</span>
+      </span>
+    );
+  }
+  if (level === "hitl") {
+    return (
+      <span className="inline-flex items-center gap-1" style={{ color: levelColor.hitl }}>
+        <span aria-hidden>👤</span>
+        <User className="h-3 w-3" />
+        <span>[HITL]</span>
+      </span>
+    );
+  }
+  return <span style={{ color: levelColor[level] }}>[{level.toUpperCase()}]</span>;
+}
+
 export function ActivityLog({ entries }: { entries: ActivityEntry[] }) {
   return (
     <div
@@ -20,7 +52,7 @@ export function ActivityLog({ entries }: { entries: ActivityEntry[] }) {
       <div className="border-b px-4 py-3" style={{ borderColor: "var(--border)" }}>
         <h3 className="text-sm font-semibold">Activity Log</h3>
         <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-          Agents think in real time
+          🤖 Agent reasoning · 🛡️ Deterministic Safety · 👤 HITL
         </p>
       </div>
       <div className="flex-1 space-y-2 overflow-y-auto p-3 font-mono text-xs">
@@ -32,10 +64,19 @@ export function ActivityLog({ entries }: { entries: ActivityEntry[] }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               className="rounded-md px-2 py-1.5"
-              style={{ background: "color-mix(in oklab, var(--bg) 70%, transparent)" }}
+              style={{
+                background:
+                  e.level === "safety"
+                    ? "rgba(245,158,11,0.08)"
+                    : e.level === "agent" || e.level === "judge"
+                      ? "rgba(56,189,248,0.06)"
+                      : e.level === "hitl"
+                        ? "rgba(249,115,22,0.08)"
+                        : "color-mix(in oklab, var(--bg) 70%, transparent)",
+              }}
             >
               <span style={{ color: "var(--text-muted)" }}>{e.ts} </span>
-              <span style={{ color: levelColor[e.level] }}>[{e.level.toUpperCase()}] </span>
+              <LevelBadge level={e.level} />{" "}
               <span>{e.message}</span>
             </motion.div>
           ))}

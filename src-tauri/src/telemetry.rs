@@ -53,6 +53,8 @@ pub struct HealthSnapshot {
     pub active_alarms: u32,
     pub sites_online: u32,
     pub sites_total: u32,
+    /// Session counter: Low-risk actions auto-approved (Autonomy Savings).
+    pub autonomy_savings: u64,
     pub last_event: Option<TelemetryEvent>,
     pub recent_events: Vec<TelemetryEvent>,
     pub nodes: Vec<TopologyNode>,
@@ -64,6 +66,7 @@ pub struct TelemetryEngine {
     health: RwLock<HealthSnapshot>,
     nodes: RwLock<Vec<TopologyNode>>,
     links: RwLock<Vec<TopologyLink>>,
+    autonomy_savings: RwLock<u64>,
 }
 
 impl TelemetryEngine {
@@ -80,6 +83,7 @@ impl TelemetryEngine {
                 active_alarms: 1,
                 sites_online: 47,
                 sites_total: 48,
+                autonomy_savings: 0,
                 last_event: None,
                 recent_events: vec![],
                 nodes: nodes.clone(),
@@ -87,13 +91,20 @@ impl TelemetryEngine {
             }),
             nodes: RwLock::new(nodes),
             links: RwLock::new(links),
+            autonomy_savings: RwLock::new(0),
         }
     }
 
-    pub fn start(self: Arc<Self>, interval: Duration) {
+    /// Background simulator: ticks every `interval` and invokes `on_tick` with a fresh snapshot
+    /// (used by Tauri to `emit` live events to the frontend).
+    pub fn start<F>(self: Arc<Self>, interval: Duration, mut on_tick: F)
+    where
+        F: FnMut(HealthSnapshot) + Send + 'static,
+    {
         std::thread::spawn(move || {
             loop {
                 self.tick();
+                on_tick(self.snapshot());
                 std::thread::sleep(interval);
             }
         });
@@ -105,10 +116,48 @@ impl TelemetryEngine {
         snap.last_event = snap.recent_events.first().cloned();
         snap.nodes = self.nodes.read().clone();
         snap.links = self.links.read().clone();
+        snap.autonomy_savings = *self.autonomy_savings.read();
         snap
     }
 
-    fn tick(&self) {
+    /// Increment session Autonomy Savings (Low-risk auto-approve).
+    pub fn record_auto_approve(&self) -> u64 {
+        let mut n = self.autonomy_savings.write();
+        *n += 1;
+        let count = *n;
+        self.health.write().autonomy_savings = count;
+        count
+    }
+
+    /// Closed-loop effect after a successful (or failed) push to a device.
+    pub fn apply_execution_effect(&self, hostname: &str, improved: bool) {
+        let mut nodes = self.nodes.write();
+        for n in nodes.iter_mut() {
+            if n.label.eq_ignore_ascii_case(hostname) || n.id.contains(hostname) {
+                if improved {
+                    n.cpu_pct = (n.cpu_pct * 0.7).clamp(8.0, 55.0);
+                    n.status = "ok".into();
+                } else {
+                    n.cpu_pct = (n.cpu_pct + 18.0).clamp(40.0, 98.0);
+                    n.status = "warning".into();
+                }
+            }
+        }
+        let mut h = self.health.write();
+        if improved {
+            h.latency_ms = (h.latency_ms * 0.85).max(8.0);
+            h.packet_loss_pct = (h.packet_loss_pct * 0.7).max(0.01);
+            h.overall_score = (h.overall_score as f64 + 3.0).min(99.0) as u8;
+            h.active_alarms = h.active_alarms.saturating_sub(1);
+        } else {
+            h.latency_ms = (h.latency_ms * 1.15).min(90.0);
+            h.overall_score = h.overall_score.saturating_sub(6);
+            h.active_alarms += 1;
+        }
+        h.nodes = nodes.clone();
+    }
+
+    pub fn tick(&self) {
         let mut rng = rand::thread_rng();
         let sites = [
             "DC-East",
@@ -221,13 +270,13 @@ impl TelemetryEngine {
 
 fn seed_nodes() -> Vec<TopologyNode> {
     vec![
-        node("pe-router-01", "pe-router-01", "DC-East", "PE", 120.0, 180.0, "cisco"),
-        node("amf-01", "amf-01", "DC-East", "AMF", 280.0, 120.0, "cisco"),
-        node("upf-03", "upf-03", "DC-West", "UPF", 480.0, 140.0, "huawei"),
-        node("agg-sw-02", "agg-sw-02", "RAN-North", "AGG", 200.0, 320.0, "huawei"),
-        node("gnodeb-441", "gnodeb-441", "RAN-North", "RAN", 120.0, 420.0, "huawei"),
-        node("firewall-edge", "firewall-edge", "Edge-POP-1", "FW", 400.0, 300.0, "cisco"),
-        node("optics-mux-7", "optics-mux-7", "Core-Peering", "OPT", 560.0, 260.0, "generic"),
+        node("pe-router-01", "pe-router-01", "Core", "PE", 140.0, 160.0, "cisco"),
+        node("amf-01", "amf-01", "DataCenter", "AMF", 300.0, 100.0, "cisco"),
+        node("upf-03", "upf-03", "DataCenter", "UPF", 480.0, 140.0, "nokia"),
+        node("agg-sw-02", "agg-sw-02", "Downtown", "AGG", 220.0, 320.0, "huawei"),
+        node("gnodeb-441", "gnodeb-441", "RAN", "RAN", 120.0, 420.0, "huawei"),
+        node("firewall-edge", "firewall-edge", "Edge", "FW", 420.0, 300.0, "nokia"),
+        node("optics-mux-7", "optics-mux-7", "Core", "OPT", 560.0, 240.0, "generic"),
     ]
 }
 

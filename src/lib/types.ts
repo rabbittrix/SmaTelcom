@@ -38,6 +38,7 @@ export interface HealthSnapshot {
   active_alarms: number;
   sites_online: number;
   sites_total: number;
+  autonomy_savings: number;
   last_event: TelemetryEvent | null;
   recent_events: TelemetryEvent[];
   nodes: TopologyNode[];
@@ -81,6 +82,20 @@ export interface TranslatedCommand {
   confidence: number;
 }
 
+export interface ConflictResolution {
+  conflict_detected: boolean;
+  winner: string;
+  loser: string;
+  priority_applied: string;
+  policy_citation: string;
+  rationale: string;
+}
+
+export interface DocumentChunk {
+  source: string;
+  content: string;
+}
+
 export interface PipelineResult {
   id: string;
   intent: string;
@@ -94,7 +109,42 @@ export interface PipelineResult {
   knowledge_used: boolean;
   predicted_impact: PredictedImpact;
   vendor_commands: TranslatedCommand[];
+  conflict_resolution: ConflictResolution;
+  evidence_sources: DocumentChunk[];
   duration_ms: number;
+}
+
+export interface PipelineProgress {
+  stage: string;
+  level: string;
+  message: string;
+}
+
+export interface DriverPayload {
+  id: string;
+  protocol: "netconf" | "gnmi";
+  target: string;
+  content_type: string;
+  body: string;
+  dry_run: boolean;
+  created_at: string;
+}
+
+export interface DriverResult {
+  payload: DriverPayload;
+  status: string;
+  message: string;
+  commit_id: string | null;
+  simulated: boolean;
+}
+
+export interface HitlOutcome {
+  action_id: string;
+  decision: string;
+  message: string;
+  command: string | null;
+  lint: LintResult | null;
+  driver: DriverResult | null;
 }
 
 export interface ActivityEntry {
@@ -110,18 +160,35 @@ export interface RoiSnapshot {
   intents_processed: number;
   total_ai_ms: number;
   human_baseline_minutes: number;
+  auto_approved: number;
+  critical_risks_averted: number;
 }
 
-export interface AuditRecord {
-  id: number;
+export interface AuditLogEntry {
+  id: string;
   timestamp: string;
   intent: string;
-  agent_logs: string;
-  final_decision: string;
-  human_approver: string | null;
-  execution_status: string;
-  risk: string;
+  final_command: string;
+  risk_level: string;
+  decision: string;
+  conflict_resolution: string | null;
+  payload_preview: string | null;
+  agent_logs: string | null;
+  policy_citation: string | null;
   ai_duration_ms: number;
+}
+
+/** @deprecated Use AuditLogEntry — kept for gradual migration */
+export type AuditRecord = AuditLogEntry;
+
+export interface ImpactReport {
+  intents_processed: number;
+  auto_approved: number;
+  hitl_pending_or_resolved: number;
+  blocked: number;
+  human_hours_saved: number;
+  critical_risks_averted: number;
+  minutes_per_auto_approve: number;
 }
 
 export interface ExecResult {
@@ -131,4 +198,84 @@ export interface ExecResult {
   output: string;
   simulated: boolean;
   success: boolean;
+}
+
+export interface ConsoleLine {
+  ts: string;
+  level: string;
+  message: string;
+}
+
+export interface InventoryDevice {
+  id: string;
+  hostname: string;
+  vendor: "cisco_ios_xe" | "huawei_vrp" | "nokia_sros";
+  site_class: string;
+  role: string;
+  mgmt_ip: string;
+  protocol_hint: string;
+}
+
+export interface VendorPayload {
+  vendor: "cisco_ios_xe" | "huawei_vrp" | "nokia_sros";
+  device_id: string;
+  format: string;
+  body: string;
+  summary: string;
+}
+
+export interface VerificationResult {
+  status: "verified" | "drift_detected" | "pending" | "skipped";
+  device_id: string;
+  before_score: number;
+  after_score: number;
+  message: string;
+  follow_up: string | null;
+}
+
+export interface ExecutionReport {
+  execution_id: string;
+  action_id: string;
+  device: InventoryDevice;
+  vendor_payload: VendorPayload;
+  console: ConsoleLine[];
+  success: boolean;
+  verification: VerificationResult;
+}
+
+export interface DeviceTarget {
+  id: string;
+  hostname: string;
+  vendor: string;
+  host: string;
+  port: number;
+  simulate: boolean;
+}
+
+/** TMF641 Service Order (camelCase from OSS/BSS). */
+export interface ServiceOrder {
+  id: string;
+  serviceType: string;
+  priority: string;
+  intent: string;
+  relatedParty?: string | null;
+  geographicSite?: string | null;
+}
+
+export interface InventoryHydration {
+  order_id: string;
+  matched_devices: InventoryDevice[];
+  context_block: string;
+  primary_target: InventoryDevice | null;
+}
+
+export interface ExternalIntentResult {
+  order: ServiceOrder;
+  hydration: InventoryHydration;
+  enriched_intent: string;
+}
+
+export interface NorthboundIngressResult {
+  ingress: ExternalIntentResult;
+  pipeline: PipelineResult;
 }

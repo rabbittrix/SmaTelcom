@@ -1,12 +1,12 @@
 {
-  "name": "smatelcom",
+  "name": "smartelcom",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "description": "Local-first Desktop AI Orchestrator for Telecommunications Network Management (AN Level 4)",
   "author": "Roberto de Souza <rabbittrix@hotmail.com>",
-  "license": "UNLICENSED",
-  "scripts": {
+  "license": "SEE LICENSE IN LICENSE",
+ "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",

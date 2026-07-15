@@ -1,6 +1,7 @@
 //! Deterministic Safety Linter / Guardrails.
 //! Runs BEFORE any Human-in-the-Loop notification.
 //! Blacklist patterns are evaluated with Rust regex — no LLM involvement.
+//! Dubai-grade blast-radius awareness escalates Core / Downtown / DataCenter targets.
 
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -30,6 +31,8 @@ struct BlacklistRule {
     pattern: Regex,
     risk: RiskLevel,
     description: &'static str,
+    /// When true, matching this rule hard-blocks the command.
+    hard_block: bool,
 }
 
 static BLACKLIST: Lazy<Vec<BlacklistRule>> = Lazy::new(|| {
@@ -39,108 +42,175 @@ static BLACKLIST: Lazy<Vec<BlacklistRule>> = Lazy::new(|| {
             r"(?i)\b(shutdown|power[\s_-]?off|halt)\b.*\b(core[_-]?router|core[_-]?switch|bng|mme|amf)\b",
             RiskLevel::Critical,
             "Forbidden: shutting down core network elements",
+            true,
         ),
         rule(
             "BL-002",
             r"(?i)\b(delete|rm|erase|wipe|purge)\b.*\b(config|configuration|running-config|startup-config)\b",
             RiskLevel::Critical,
             "Forbidden: deleting device configuration",
+            true,
         ),
         rule(
             "BL-003",
             r"(?i)\b(format|mkfs|dd\s+if=)\b",
             RiskLevel::Critical,
             "Forbidden: destructive filesystem operations",
+            true,
         ),
         rule(
             "BL-004",
             r"(?i)\b(disable|teardown)\b.*\b(firewall|acl|security[_-]?policy|ips|ids)\b",
             RiskLevel::Critical,
             "Forbidden: disabling security controls",
+            true,
         ),
         rule(
             "BL-005",
             r"(?i)\b(factory[\s_-]?reset|write\s+erase|erase\s+startup)\b",
             RiskLevel::Critical,
             "Forbidden: factory reset / erase startup",
+            true,
         ),
         rule(
             "BL-006",
             r"(?i)\b(clear|flush)\b.*\b(bgp|ospf|isis|mpls)\b.*\b(all|entire|full)\b",
             RiskLevel::High,
             "High risk: clearing entire routing protocol state",
+            false,
         ),
         rule(
             "BL-007",
             r"(?i)\b(reload|reboot|restart)\b.*\b(chassis|supervisor|control[_-]?plane)\b",
             RiskLevel::High,
             "High risk: control-plane reload",
+            false,
         ),
         rule(
             "BL-008",
             r"(?i)\b(open|permit)\b.*\b(any\s+any|0\.0\.0\.0/0)\b",
             RiskLevel::High,
             "High risk: overly permissive ACL",
+            false,
         ),
         rule(
             "BL-009",
             r"(?i)\b(qos|traffic[\s_-]?shape|rate[\s_-]?limit|bandwidth)\b",
             RiskLevel::Medium,
             "Medium risk: QoS / traffic engineering change",
+            false,
         ),
         rule(
             "BL-010",
             r"(?i)\b(optimize|tune|adjust)\b.*\b(threshold|timer|metric|weight)\b",
             RiskLevel::Low,
             "Low risk: optimization / tuning",
+            false,
+        ),
+        // Dubai-grade hard-blocks
+        rule(
+            "BL-011",
+            r"(?i)\b(no\s+logging|disable\s+logging|logging\s+disable|undebug\s+all|no\s+debug)\b",
+            RiskLevel::Critical,
+            "Forbidden: disabling logging / audit trail",
+            true,
+        ),
+        rule(
+            "BL-012",
+            r"(?i)\b(root[\s_-]?cert|trustpoint|crypto\s+pki|ca[\s_-]?certificate|remove\s+certificate)\b",
+            RiskLevel::Critical,
+            "Forbidden: modifying root / PKI certificates",
+            true,
+        ),
+        rule(
+            "BL-013",
+            r"(?i)\b(bypass\s*2fa|disable\s*(mfa|2fa|two[\s_-]?factor)|skip\s*(mfa|2fa)|authentication\s+bypass|no\s+aaa\s+authentication)\b",
+            RiskLevel::Critical,
+            "Forbidden: bypassing 2FA / MFA authentication layer",
+            true,
         ),
     ]
 });
 
-fn rule(id: &'static str, pattern: &str, risk: RiskLevel, description: &'static str) -> BlacklistRule {
+/// Critical site / blast-radius markers — escalate regardless of AI risk rating.
+static CRITICAL_SITE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(
+        r"(?i)\b(core|downtown|data[\s_-]?center|datacenter|dc[\s_-]?(east|west|central)|core[\s_-]?peering|bng[\s_-]?core)\b",
+    )
+    .expect("critical site regex")
+});
+
+fn rule(
+    id: &'static str,
+    pattern: &str,
+    risk: RiskLevel,
+    description: &'static str,
+    hard_block: bool,
+) -> BlacklistRule {
     BlacklistRule {
         id,
         pattern: Regex::new(pattern).expect("invalid blacklist regex"),
         risk,
         description,
+        hard_block,
     }
 }
 
 /// Deterministic validation of an AI-proposed command string.
 pub fn lint_command(command: &str) -> LintResult {
+    lint_with_context(command, "")
+}
+
+/// Lint command + optional intent/context (blast-radius site awareness).
+pub fn lint_with_context(command: &str, context: &str) -> LintResult {
+    let blob = if context.is_empty() {
+        command.to_string()
+    } else {
+        format!("{command}\n{context}")
+    };
+
     let mut matched = Vec::new();
     let mut highest = RiskLevel::Low;
+    let mut hard_blocked = false;
 
     for rule in BLACKLIST.iter() {
-        if rule.pattern.is_match(command) {
+        if rule.pattern.is_match(&blob) {
             matched.push(format!("{}: {}", rule.id, rule.description));
             highest = max_risk(highest, rule.risk.clone());
+            if rule.hard_block {
+                hard_blocked = true;
+            }
         }
     }
 
-    let blocked = matches!(highest, RiskLevel::Critical) && !matched.is_empty()
-        && matched.iter().any(|m| m.starts_with("BL-00") && {
-            // Critical blacklist IDs BL-001..BL-005 are hard blocks
-            m.starts_with("BL-001")
-                || m.starts_with("BL-002")
-                || m.starts_with("BL-003")
-                || m.starts_with("BL-004")
-                || m.starts_with("BL-005")
-        });
+    // Blast-radius escalation: Core / Downtown / DataCenter → at least High.
+    if CRITICAL_SITE.is_match(&blob) {
+        let before = highest.clone();
+        highest = max_risk(highest, RiskLevel::High);
+        matched.push(format!(
+            "BR-001: Critical-site blast radius — target mentions Core/Downtown/DataCenter \
+             (escalated {:?} → {:?})",
+            before, highest
+        ));
+        // Aggressive change on a critical site → Critical + HITL (still allowed unless hard-block).
+        if AGGRESSIVE_CHANGE.is_match(&blob) {
+            highest = RiskLevel::Critical;
+            matched.push(
+                "BR-002: Aggressive change on critical site — escalated to Critical".into(),
+            );
+        }
+    }
 
-    // Graduated autonomy:
-    // Low  → auto-approvable
-    // Medium → HITL recommended
-    // High/Critical → HITL mandatory; Critical blacklist → hard block
-    let auto_approvable = matches!(highest, RiskLevel::Low) && !blocked;
+    let auto_approvable = matches!(highest, RiskLevel::Low) && !hard_blocked;
     let requires_hitl = !auto_approvable;
 
-    if blocked {
+    if hard_blocked {
         LintResult {
             allowed: false,
             risk: RiskLevel::Critical,
             reason: matched
-                .first()
+                .iter()
+                .find(|m| m.starts_with("BL-"))
                 .cloned()
                 .unwrap_or_else(|| "Blocked by safety blacklist".into()),
             matched_rules: matched,
@@ -172,6 +242,13 @@ pub fn lint_command(command: &str) -> LintResult {
         }
     }
 }
+
+static AGGRESSIVE_CHANGE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(
+        r"(?i)\b(increase\s+(tx\s*)?power|boost|aggressive|shutdown|reload|clear\s+bgp|permit\s+any)\b",
+    )
+    .expect("aggressive change regex")
+});
 
 fn max_risk(a: RiskLevel, b: RiskLevel) -> RiskLevel {
     use RiskLevel::*;
@@ -206,5 +283,37 @@ mod tests {
         let r = lint_command("optimize threshold for cell edge throughput");
         assert!(r.allowed);
         assert!(r.auto_approvable);
+    }
+
+    #[test]
+    fn blocks_disable_logging() {
+        let r = lint_command("no logging on pe-edge");
+        assert!(!r.allowed);
+        assert!(r.matched_rules.iter().any(|m| m.starts_with("BL-011")));
+    }
+
+    #[test]
+    fn blocks_2fa_bypass() {
+        let r = lint_command("bypass 2fa for lab operator");
+        assert!(!r.allowed);
+    }
+
+    #[test]
+    fn escalates_downtown_site() {
+        let r = lint_with_context(
+            "optimize threshold for cell edge",
+            "Reduce congestion Downtown RAN sector",
+        );
+        assert!(r.allowed);
+        assert!(r.risk >= RiskLevel::High);
+        assert!(r.requires_hitl);
+        assert!(!r.auto_approvable);
+    }
+
+    #[test]
+    fn escalates_core_aggressive() {
+        let r = lint_command("increase tx power on core pe-router-01");
+        assert_eq!(r.risk, RiskLevel::Critical);
+        assert!(r.requires_hitl);
     }
 }

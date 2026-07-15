@@ -1,7 +1,10 @@
 import { motion } from "framer-motion";
 import {
   Activity,
+  BarChart3,
   BookOpen,
+  ClipboardList,
+  FileSearch,
   Gauge,
   GitBranch,
   Moon,
@@ -10,6 +13,7 @@ import {
   Sun,
   Radio,
   Cable,
+  Terminal,
 } from "lucide-react";
 import { useTheme } from "../../hooks/useTheme";
 
@@ -18,6 +22,11 @@ const nav = [
   { id: "pipeline", label: "Intent Pipeline", icon: Network },
   { id: "topology", label: "Topology Map", icon: GitBranch },
   { id: "vendors", label: "Vendor Adapters", icon: Cable },
+  { id: "drivers", label: "Northbound", icon: Radio },
+  { id: "console", label: "Live Console", icon: Terminal },
+  { id: "evidence", label: "Evidence", icon: FileSearch },
+  { id: "audit", label: "Audit Trail", icon: ClipboardList },
+  { id: "impact", label: "Impact Report", icon: BarChart3 },
   { id: "safety", label: "Safety Linter", icon: Shield },
   { id: "knowledge", label: "Knowledge Base", icon: BookOpen },
   { id: "activity", label: "Activity Log", icon: Activity },
@@ -38,13 +47,13 @@ export function Sidebar({
 
   return (
     <aside
-      className="flex h-full w-64 shrink-0 flex-col border-r"
+      className="flex h-full w-60 shrink-0 flex-col border-r"
       style={{ background: "var(--bg-sidebar)", borderColor: "var(--border)" }}
     >
       <div className="flex items-center gap-3 px-5 py-6">
-        <img src="/logo.png" alt="SmaTelcom" className="h-10 w-10 rounded-lg" />
+        <img src="/logo.png" alt="SmarTelcom" className="h-10 w-10 rounded-lg" />
         <div>
-          <div className="text-lg font-semibold tracking-tight">SmaTelcom</div>
+          <div className="text-lg font-semibold tracking-tight">SmarTelcom</div>
           <div className="text-xs" style={{ color: "var(--text-muted)" }}>
             AN Level 4 Orchestrator
           </div>
@@ -67,13 +76,13 @@ export function Sidebar({
               {selected && (
                 <motion.span
                   layoutId="nav-pill"
-                  className="absolute inset-0 rounded-lg"
+                  className="pointer-events-none absolute inset-0 rounded-lg"
                   style={{ background: "var(--accent-soft)" }}
                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
                 />
               )}
-              <Icon className="relative z-10 h-4 w-4" />
-              <span className="relative z-10">{label}</span>
+              <Icon className="relative z-10 h-4 w-4 shrink-0" />
+              <span className="relative z-10 truncate">{label}</span>
             </button>
           );
         })}

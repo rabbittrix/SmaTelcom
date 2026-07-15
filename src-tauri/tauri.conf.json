@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "SmaTelcom",
+  "productName": "SmarTelcom",
   "version": "0.1.0",
-  "identifier": "com.smatelcom.app",
+  "identifier": "com.smartelcom.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "SmaTelcom — AI Network Orchestrator",
+        "title": "SmarTelcom — AI Network Orchestrator",
         "width": 1440,
         "height": 900,
         "minWidth": 1100,

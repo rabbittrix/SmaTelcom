@@ -10,7 +10,7 @@ export function RoiCalculator({ roi }: { roi: RoiSnapshot | null }) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed bottom-4 right-4 z-40 w-[260px] rounded-xl border p-4 shadow-xl backdrop-blur"
+      className="pointer-events-auto fixed bottom-4 right-4 z-20 w-[260px] rounded-xl border p-4 shadow-xl backdrop-blur"
       style={{
         background: "color-mix(in oklab, var(--bg-elevated) 92%, transparent)",
         borderColor: "var(--border)",

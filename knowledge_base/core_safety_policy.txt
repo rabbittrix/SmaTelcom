@@ -1,4 +1,4 @@
-# SmaTelcom — Core Network Safety Policy
+# SmarTelcom — Core Network Safety Policy
 
 ## Blacklist Principles
 Any AI-generated operational command MUST pass the Rust Safety Linter before

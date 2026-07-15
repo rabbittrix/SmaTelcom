@@ -1,13 +1,13 @@
 [package]
-name = "smatelcom"
+name = "smartelcom"
 version = "0.1.0"
-description = "SmaTelcom — Local-first Desktop AI Orchestrator for Telecommunications Network Management (AN Level 4)"
+description = "SmarTelcom — Local-first Desktop AI Orchestrator for Telecommunications Network Management (AN Level 4)"
 authors = ["Roberto de Souza <rabbittrix@hotmail.com>"]
 edition = "2021"
-license = "LicenseRef-SmaTelcom-Private"
+license = "LicenseRef-SmarTelcom-Private"
 
 [lib]
-name = "smatelcom_lib"
+name = "smartelcom_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

@@ -33,6 +33,14 @@ export function ReasoningSidebar({
         meta: `confidence ${(o.confidence * 100).toFixed(0)}%`,
       });
     });
+    if (result.conflict_resolution?.conflict_detected) {
+      const c = result.conflict_resolution;
+      turns.push({
+        who: "Judge Agent — Conflict Resolution",
+        body: `${c.winner} wins over ${c.loser}\nPriority: ${c.priority_applied}\n${c.rationale}\nPolicy: ${c.policy_citation}`,
+        meta: "Security/Stability > Compliance > Performance",
+      });
+    }
     turns.push({
       who: "Judge Agent",
       body: `${result.judge_summary}\nLogic: ${result.decision_logic}\nCommand: ${result.proposed_command}`,

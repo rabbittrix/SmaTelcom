@@ -1,4 +1,4 @@
-//! Shared error types for SmaTelcom Rust layer.
+//! Shared error types for SmarTelcom Rust layer.
 
 use serde::Serialize;
 use thiserror::Error;

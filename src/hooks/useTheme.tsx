@@ -9,14 +9,14 @@ const ThemeContext = createContext<{
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem("smatelcom-theme") as Theme | null;
+    const saved = localStorage.getItem("smartelcom-theme") as Theme | null;
     return saved ?? "dark";
   });
 
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("smatelcom-theme", theme);
+    localStorage.setItem("smartelcom-theme", theme);
   }, [theme]);
 
   return (

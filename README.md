@@ -1,4 +1,4 @@
-# SmaTelcom
+# SmarTelcom
 
 **Local-first Desktop AI Orchestrator for Telecommunications Network Management**  
 *(Autonomous Networks Level 4)*
@@ -14,7 +14,7 @@
 
 ## Vision
 
-SmaTelcom is a mission-critical desktop orchestrator that analyzes **network intents** with a multi-agent SLM pipeline, grounds answers in local manuals (RAG), validates every proposed command with a **deterministic Rust Safety Linter**, and escalates risky actions through a **Human-in-the-Loop (HITL)** workflow with graduated autonomy.
+SmarTelcom is a mission-critical desktop orchestrator that analyzes **network intents** with a multi-agent SLM pipeline, grounds answers in local manuals (RAG), validates every proposed command with a **deterministic Rust Safety Linter**, and escalates risky actions through a **Human-in-the-Loop (HITL)** workflow with graduated autonomy.
 
 > **Architectural note:** The UI is **Vite + React + TypeScript** (not Next.js). Tauri desktop apps ship a static SPA into a native WebView; Next.js SSR/App Router adds complexity without benefit for a local-first offline desktop product. Tailwind, Lucide, and Framer Motion are used as specified.
 
@@ -23,6 +23,7 @@ SmaTelcom is a mission-critical desktop orchestrator that analyzes **network int
 ## Core Features
 
 ### 1. Multi-Agent Decision Pipeline
+
 - **Performance Agent** — latency, throughput, QoS, capacity  
 - **Security Agent** — threats, ACL integrity, blast radius  
 - **Topology Agent** — path diversity, site roles, failover  
@@ -30,17 +31,21 @@ SmaTelcom is a mission-critical desktop orchestrator that analyzes **network int
 - Inference via **Ollama** at `http://127.0.0.1:11434` (Phi-3 / Mistral preferred)
 
 ### 2. Safety Linter (Rust)
+
 Deterministic regex blacklist — **no LLM** — runs **before** HITL:
 - Hard-block: `shutdown core_router`, `delete config`, factory reset, disable firewall, etc.
 - Graduated risk: Low → auto-approve · Medium/High → HITL · Critical blacklist → blocked
 
 ### 3. Human-in-the-Loop
+
 Critical/complex actions surface a high-visibility modal with:
+
 - Decision logic  
 - Risk assessment (Low / Medium / High / Critical)  
 - **Approve** / **Reject**
 
 ### 4. Dashboard UX
+
 - Dark / light theme (Linear / Vercel–inspired technical aesthetic)  
 - Sidebar navigation  
 - Live **Network Health** from Rust telemetry simulator  
@@ -48,17 +53,19 @@ Critical/complex actions surface a high-visibility modal with:
 - Framer Motion transitions  
 
 ### 5. Telemetry Simulation
+
 Rust thread emits mock JSON network events every **5 seconds** for the AI loop.
 
 ### 6. Local RAG
+
 Reads `knowledge_base/` (`.txt`, `.md`, `.pdf`), chunks content, and injects top passages into agent prompts.
 
 ---
 
 ## Repository Structure
 
-```
-SmaTelcom/
+```text
+SmarTelcom/
 ├── assets/                      # Brand: logo.png, favicon.png
 ├── knowledge_base/              # Local manuals for RAG
 │   ├── ran_congestion_playbook.txt
@@ -165,7 +172,7 @@ npm run tauri:build
 
 ## Safety & Autonomy Model
 
-```
+```text
 Intent → RAG context → 3 Specialist Agents → Judge Agent
        → Rust Safety Linter (deterministic)
        → Auto-approve (Low) | HITL modal (Medium+) | Hard block (Critical blacklist)
@@ -193,7 +200,7 @@ npm run tauri icon ./assets/logo.png
 
 ## Configuration Notes
 
-- Window defaults: 1440×900, title `SmaTelcom — AI Network Orchestrator`
+- Window defaults: 1440×900, title `SmarTelcom — AI Network Orchestrator`
 - CSP allows only `self` + Ollama localhost
 - Telemetry interval: **5 seconds** (`telemetry.rs`)
 - Knowledge root: `knowledge_base/` (resolved relative to app / `src-tauri`)
@@ -202,11 +209,11 @@ npm run tauri icon ./assets/logo.png
 
 ## Development Roadmap (post-MVP)
 
-- [ ] Persist HITL decisions to encrypted local store  
-- [ ] Streaming Ollama tokens into Activity Log  
-- [ ] Embeddings-based RAG (local vector index)  
-- [ ] Northbound adapters (NETCONF / gNMI) behind safety gate  
-- [ ] Signed audit trail for AN Level-4 compliance  
+- [x] Persist HITL decisions to encrypted local store  
+- [x] Streaming Ollama tokens into Activity Log  
+- [x] Embeddings-based RAG (local vector index)  
+- [x] Northbound adapters (NETCONF / gNMI) behind safety gate  
+- [x] Signed audit trail for AN Level-4 compliance  
 
 ---
 
@@ -231,4 +238,4 @@ Unauthorized use, redistribution, or deployment is prohibited.
 
 ## Disclaimer
 
-SmaTelcom is an **MVP research / lab orchestrator**. Do not connect to production network elements without a formal safety case, change-management process, operator certification, and **Author Authorization**. The Safety Linter reduces risk; it does not eliminate it.
+SmarTelcom is an **MVP research / lab orchestrator**. Do not connect to production network elements without a formal safety case, change-management process, operator certification, and **Author Authorization**. The Safety Linter reduces risk; it does not eliminate it.
